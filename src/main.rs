@@ -1,8 +1,8 @@
 #![windows_subsystem = "windows"]
 
-pub mod configs;
-pub mod particle;
-pub mod quadtree;
+mod configs;
+mod particle;
+mod quadtree;
 
 use std::f32::consts::TAU;
 
@@ -32,6 +32,7 @@ fn generate_random_points(number_of_points: f32) -> Vec<Particle> {
             },
             POINT_COLOR,
             POINT_RADIUS,
+            rng.gen_range(BLINK_INCREMENT_RATE..MAX_BLINK_CHARGE - BLINK_INCREMENT_RATE),
         ));
     }
     points
@@ -78,16 +79,9 @@ fn check_overlap(points: &mut Vec<Particle>, quadtree: QuadTree) {
         let overlap = quadtree.query(Circle {
             x: pos.x,
             y: pos.y,
-            r: 2.0 * points[index].get_radius(),
+            r: BLINK_CHECK_RADIUS,
         });
-        if overlap.len() > 1 {
-            points[index].set_color(BLUE);
-            // for index_2 in 0..overlap.len() {
-            //     overlap[index_2].color = BLUE;
-            // }
-        } else {
-            points[index].set_color(RED);
-        }
+        points[index].update_blink_charge(&overlap);
     }
 }
 
@@ -104,7 +98,7 @@ fn build_quadtree(points: &mut Vec<Particle>) -> QuadTree {
 
 fn window_conf() -> Conf {
     Conf {
-        window_title: "Quadtree Visualizer".to_owned(),
+        window_title: "Emergent Blinking".to_owned(),
         window_width: WINDOW_WIDTH as i32,
         window_height: WINDOW_HEIGHT as i32,
         ..Default::default()
@@ -124,8 +118,8 @@ async fn main() {
 
         move_points(&mut points);
 
-        let mut quadtree = build_quadtree(&mut points);
-        quadtree.display(4.0, GREEN);
+        let quadtree = build_quadtree(&mut points);
+        // quadtree.display(4.0, GREEN);
 
         // check_overlap(&mut points);
         check_overlap(&mut points, quadtree);
